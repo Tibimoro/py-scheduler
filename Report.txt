@@ -1,0 +1,23 @@
+Proyecto Planificador — Reporte del Grupo
+
+Integrantes:
+  -Sourour Rihane
+  -Pamela Cristina Arias Bravo
+
+**Node Selection Logic**
+Our scheduler selects the node with the fewest running pods. This ensures balanced workload distribution across available nodes. Additionally, in our extended version, nodes are filtered using taints and tolerations to ensure pods are only scheduled on compatible nodes. When using node labels (e.g., `env=prod`), the scheduler also restricts selection to those labeled nodes.
+
+**Scheduling Behavior Observations**
+
+* Pods assigned with `schedulerName: my-scheduler` are correctly handled by our custom scheduler.
+* Logs confirm successful binding with the message: `Bound default/test-pod -> <node>`.
+* When no suitable node is available due to taints or missing tolerations, the scheduler logs an error but continues running, demonstrating resilience.
+* Pod assignment reflects policy logic, including label and taint-aware placement.
+
+**Polling vs Watch Model**
+
+* **Polling:** Simpler to implement, periodically queries for unscheduled pods. However, it causes unnecessary load on the API server and is less responsive.
+* **Watch:** Efficient and real-time. It listens for pod creation events and reacts immediately. While more efficient, it requires careful handling of event streams and errors.
+
+**Conclusion**
+Both approaches were implemented and tested. The scheduler accurately binds pods, respects taints and labels, and illustrates both polling and watch-based scheduling logic in Kubernetes.

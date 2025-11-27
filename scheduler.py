@@ -15,12 +15,11 @@ def bind_pod(api: client.CoreV1Api, pod, node_name: str):
     api.create_namespaced_binding(pod.metadata.namespace, body)
 
 def choose_node(api, pod):
-    # Only use nodes labeled env=prod
-    nodes = [n for n in api.list_node().items
-             if n.metadata.labels and n.metadata.labels.get("env") == "prod"]
+    all_nodes = api.list_node().items
+    nodes = [n for n in all_nodes if node_tolerates_taints(n, pod)]
 
     if not nodes:
-        raise RuntimeError("No suitable nodes with label env=prod")
+        raise RuntimeError("No suitable nodes after taint filtering")
 
     pods = api.list_pod_for_all_namespaces().items
     min_cnt, pick = math.inf, nodes[0].metadata.name
@@ -29,6 +28,22 @@ def choose_node(api, pod):
         if cnt < min_cnt:
             min_cnt, pick = cnt, n.metadata.name
     return pick
+
+def node_tolerates_taints(node, pod):
+    taints = node.spec.taints or []
+    tolerations = pod.spec.tolerations or []
+    if not taints:
+        return True
+    for taint in taints:
+        tolerated = any(
+            tol.key == taint.key and
+            (tol.effect == taint.effect or tol.effect is None) and
+            (tol.operator == "Exists" or tol.value == taint.value)
+            for tol in tolerations
+        )
+        if not tolerated:
+            return False
+    return True
 
 
 def main():

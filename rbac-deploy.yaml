@@ -31,6 +31,12 @@ spec:
       labels: {app: my-scheduler}
     spec:
       serviceAccountName: my-scheduler
+      tolerations:
+      - key: "key1"
+        operator: "Equal"
+        value: "value1"
+        effect: "NoSchedule"
+
       containers:
       - name: scheduler
         image: my-py-scheduler:latest
